@@ -1,0 +1,141 @@
+<?php
+
+include '../components/connect.php';
+
+session_start();
+
+$admin_id = $_SESSION['admin_id'];
+
+if(!isset($admin_id)){
+   header('location:admin_login.php');
+};
+
+if(isset($_POST['update_payment'])){
+
+   $order_id = $_POST['order_id'];
+   
+   $payment_status = $_POST['payment_status'];
+   
+   $update_status = $conn->prepare("UPDATE `orders` SET payment_status = ? WHERE id = ?");
+   
+   $update_status->execute([$payment_status, $order_id]);
+   
+   $message[] = 'payment status updated!';
+
+
+}
+
+if(isset($_GET['delete'])){
+   $delete_id = $_GET['delete'];
+   $delete_order = $conn->prepare("DELETE FROM `orders` WHERE id = ?");
+   $delete_order->execute([$delete_id]);
+   header('location:placed_orders.php');
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>placed orders</title>
+
+   <!-- font awesome cdn link  -->
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+
+   <!-- custom css file link  -->
+   <link rel="stylesheet" href="../css/admin_style.css">
+   <style>
+		 table ,th ,td {
+		  border:1px solid black;
+        
+		  }
+	  </style>
+
+</head>
+<body>
+
+<?php include '../components/admin_header.php' ?>
+
+<!-- placed orders section starts  -->
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function () {
+    $('#example').DataTable();
+});
+</script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+<section class="placed-orders">
+
+   <h1 class="heading">placed orders</h1>
+
+   <table id='example' class='display'  cellspacing==0 cellpadding=10 border="2" width="1200" align="justify">
+      <thead>
+     <tr><th> user id </th> 
+      <th> placed on  </th>
+      <th> name  </th>
+      <th> email </th> 
+      <th> number </th>
+      <th> address </th> 
+      <th> total products </th> 
+      <th> total price </th> 
+      <th> payment method  </th>
+      <th>status</th>
+      
+         </tr>
+</thead>
+<tbody>
+
+   <?php
+      $select_orders = $conn->prepare("SELECT * FROM `orders`");
+      $select_orders->execute();
+      if($select_orders->rowCount() > 0){
+         while($fetch_orders = $select_orders->fetch(PDO::FETCH_ASSOC)){
+   ?>
+    
+         <tr> 
+    <td><span><?= $fetch_orders['user_id']; ?></span></td>
+    <td><span><?= $fetch_orders['placed_on']; ?></span></td> 
+    <td><span><?= $fetch_orders['name']; ?></span> </td>
+    <td><span><?= $fetch_orders['email']; ?></span></td>
+    <td><span><?= $fetch_orders['number']; ?></span></td>
+    <td><span><?= $fetch_orders['address']; ?></span></td>
+    <td><span><?= $fetch_orders['total_products']; ?></span></td>
+    <td><span>₹<?= $fetch_orders['total_price']; ?></span></td>
+    <td><span><?= $fetch_orders['method']; ?></span></td>
+    <td> <form action="" method="POST">
+        <input type="hidden" name="order_id" value="<?php $fetch_orders['id']; ?>">
+        <select name="payment_status" >
+           <option value="" selected disabled><?= $fetch_orders['payment_status']; ?></option>
+           
+        </select></td>
+   
+    
+    </tr>      
+            
+   <?php
+      }
+      echo "</tbody></table>";
+
+   }
+?>
+</section>
+
+<!-- placed orders section ends -->
+
+
+
+
+
+
+
+
+
+<!-- custom js file link  -->
+<script src="../js/admin_script.js"></script>
+
+</body>
+</html>
